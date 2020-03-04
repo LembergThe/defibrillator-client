@@ -5,7 +5,6 @@ import FilterFormik from './FilterFormik';
 
 const useStyles = makeStyles({
   container: {
-    borderLeft: '1px solid grey',
     backgroundColor: 'white'
   }
 });
@@ -17,7 +16,7 @@ const Filter = () => {
   return (
     <div className={classes.container}>
       <FilterButton isOpen={isOpen} setIsOpen={setIsOpen} />
-      {isOpen && <FilterFormik />}
+      {isOpen && <FilterFormik setIsOpen={setIsOpen} />}
     </div>
   );
 };

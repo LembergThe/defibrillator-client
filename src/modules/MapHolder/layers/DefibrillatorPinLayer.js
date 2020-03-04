@@ -1,73 +1,126 @@
 /* eslint-disable no-param-reassign */
-
 import React from 'react';
 import { connect } from 'react-redux';
+import { makeStyles } from '@material-ui/core/styles';
 import PropTypes from 'prop-types';
-import { GeoJSONLayer } from 'react-mapbox-gl';
+import { Cluster, Marker } from 'react-mapbox-gl';
 import geoJsonData from '../geoJsonData';
-import SYMBOL_LAYOUT from '../symbolLayout';
-import {
-  setMapCenter,
-  setMapZoom
-} from '../actions/mapState';
-import { defsSearchSelector } from '../../Sidebar/components/ItemList/reducers/listReducer';
 import { showPopup } from '../actions/popupDisplay';
+import mapPin from '../../../icons/map-marker-point.svg';
+
+const useStyles = makeStyles(() => ({
+  clusterMarker: {
+    width: 50,
+    height: 50,
+    display: 'flex',
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderRadius: '50%',
+    backgroundColor: 'rgba(124, 124, 124, 0.9)',
+    boxShadow: '1px 1px 3px rgba(124, 124, 124, 0.9)',
+    color: 'white',
+    fontWeight: 900,
+    cursor: 'pointer'
+  },
+  marker: {
+    width: 50,
+    height: 50,
+    borderRadius: '50%',
+    display: 'flex',
+    justifyContent: 'center',
+    alignItems: 'center'
+  },
+  markerWrapper: {
+    textAlign: 'center',
+    fontSize: 14,
+    fontWeight: 'bold',
+    textShadow: '1px 1px 2px white',
+    cursor: 'pointer'
+  },
+  title: {
+    width: 200
+  },
+  pin: {
+    width: 30,
+    height: 30
+  }
+}));
 
 const DefibrillatorPinLayer = ({
   filteredDefs,
-  map,
-  setMapCenterCoords,
   showPopup
 }) => {
   const GEO_JSON_DATA = geoJsonData(filteredDefs);
-
-  const defibrillatorPinClick = event => {
-    const { defID } = event.features[0].properties;
-    const coords = event.features[0].geometry.coordinates;
-
-    setMapCenterCoords({
-      lng: coords[0],
-      lat: coords[1]
-    });
-
+  const classes = useStyles();
+  const defibrillatorPinClick = feature => {
+    const { defID } = feature.properties;
+    const { coordinates } = feature.geometry;
     showPopup({
       data: {
         id: defID
       },
-      coordinates: coords
+      coordinates
     });
   };
-
-  const mouseEnter = () => {
-    map.getCanvas().style.cursor = 'pointer';
-  };
-
-  const mouseLeave = () => {
-    map.getCanvas().style.cursor = '';
+  const clusterRender = GEO_JSON_DATA.features.map(
+    feature => {
+      return (
+        <Marker
+          className={classes.marker}
+          key={feature.properties.defID}
+          coordinates={feature.geometry.coordinates}
+          onClick={() => defibrillatorPinClick(feature)}
+        >
+          <div className={classes.markerWrapper}>
+            <img
+              alt="Map pin"
+              src={mapPin}
+              className={classes.pin}
+            />
+            <p className={classes.title}>
+              {feature.properties.title}
+            </p>
+          </div>
+        </Marker>
+      );
+    }
+  );
+  const clusterMarker = (coordinates, pointCount) => {
+    return (
+      <Marker
+        key={coordinates}
+        coordinates={coordinates}
+        className={classes.clusterMarker}
+      >
+        {pointCount}
+      </Marker>
+    );
   };
 
   return (
-    <GeoJSONLayer
-      data={GEO_JSON_DATA}
-      symbolLayout={SYMBOL_LAYOUT}
-      symbolOnClick={defibrillatorPinClick}
-      symbolOnMouseEnter={mouseEnter}
-      symbolOnMouseLeave={mouseLeave}
-    />
+    <Cluster
+      ClusterMarkerFactory={clusterMarker}
+      zoomOnClick
+      zoomOnClickPadding={80}
+      radius={100}
+    >
+      {clusterRender}
+    </Cluster>
   );
 };
 
 DefibrillatorPinLayer.defaultProps = {
   map: {},
   filteredDefs: [],
-  setMapCenterCoords: () => null,
   showPopup: () => null
 };
 
 DefibrillatorPinLayer.propTypes = {
   map: PropTypes.shape({
     getCanvas: PropTypes.func,
-    getZoom: PropTypes.func
+    getZoom: PropTypes.func,
+    getSource: PropTypes.func,
+    easeTo: PropTypes.func
   }),
   filteredDefs: PropTypes.arrayOf(
     PropTypes.shape({
@@ -88,7 +141,6 @@ DefibrillatorPinLayer.propTypes = {
       additional_information: PropTypes.string
     })
   ),
-  setMapCenterCoords: PropTypes.func,
   showPopup: PropTypes.func,
 
   mapState: PropTypes.shape({
@@ -100,12 +152,10 @@ DefibrillatorPinLayer.propTypes = {
 
 export default connect(
   state => ({
-    filteredDefs: defsSearchSelector(state),
+    filteredDefs: state.defs.data,
     mapState: state.mapState
   }),
   dispatch => ({
-    setMapCenterCoords: map => dispatch(setMapCenter(map)),
-    setMapZoom: zoom => dispatch(setMapZoom(zoom)),
     showPopup: popupInfo => dispatch(showPopup(popupInfo))
   })
 )(DefibrillatorPinLayer);

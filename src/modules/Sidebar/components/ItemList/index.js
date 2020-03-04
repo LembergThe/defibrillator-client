@@ -11,12 +11,18 @@ import PropTypes from 'prop-types';
 import { fetchDefs } from './actions/list';
 import DefItem from './components/DefItem';
 import InfoMessage from './components/InfoMessage';
-import { defsSearchSelector } from './reducers/listReducer';
 import cancelToken from '../../../../shared/cancel-token';
 
 const defsCancelToken = cancelToken();
 
 const useStyles = makeStyles({
+  infoMessage: {
+    position: 'relative',
+    top:'50%',
+    transform:'translateY(-50%)',
+    color: 'white',
+    textAlign: 'center',
+  },
   listOuterStyle: {
     width: '100%',
     height: 'calc(100vh - 100px)',
@@ -51,10 +57,7 @@ const ItemList = ({
   page
 }) => {
   const classes = useStyles();
-  const noFilteredDefs =
-    !isLoading && filter && !defibrillators.length;
-  const isDatabaseEmpty =
-    !isLoading && !filter && !defibrillators.length;
+  const noData = !isLoading && !defibrillators.length;
 
   useEffect(() => {
     fetchDefItems();
@@ -100,8 +103,7 @@ const ItemList = ({
     );
   };
 
-  const show =
-    isLoading || noFilteredDefs || isDatabaseEmpty;
+  const show = isLoading || noData;
 
   let message;
 
@@ -109,11 +111,8 @@ const ItemList = ({
     case isLoading:
       message = 'Завантаження...';
       break;
-    case isDatabaseEmpty:
-      message = 'База даних пуста...';
-      break;
-    case noFilteredDefs:
-      message = 'По заданому фільтру нічого не знайдено...';
+    case noData:
+      message = 'Даних не знайдено...';
       break;
     default:
       message = '';
@@ -185,7 +184,7 @@ export default connect(
     isLoading: state.defs.loading,
     defibrillators: state.defs.data,
     filter: state.filter,
-    searchedDefs: defsSearchSelector(state),
+    searchedDefs: state.defs.data,
     totalCount: state.defs.totalCount,
     page: state.defs.page
   }),

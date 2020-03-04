@@ -1,11 +1,8 @@
-import listReducer, {
-  defsSearchSelector
-} from '../listReducer';
+import listReducer from '../listReducer';
 import * as types from '../../consts';
 
 import {
   mockState,
-  mockFilter,
   mockNewDefInfo
 } from '../../../../../../mocks';
 
@@ -133,14 +130,5 @@ describe('defibrillators CRUD part', () => {
     expect(res.data.length).toEqual(
       expectedState.data.length
     );
-  });
-
-  it('should create defsSearchSelector function', () => {
-    const fullState = {
-      defs: mockState,
-      filter: mockFilter
-    };
-    const filteredDefs = defsSearchSelector(fullState);
-    expect(filteredDefs.length).toBeTruthy();
   });
 });

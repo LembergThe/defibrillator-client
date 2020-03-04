@@ -1,4 +1,3 @@
-/* eslint-disable camelcase */
 import React from 'react';
 import Button from '@material-ui/core/Button';
 import SaveIcon from '@material-ui/icons/Save';
@@ -17,27 +16,7 @@ import { MyTextField } from '../Fields';
 const useStyles = makeStyles({
   DefaultStyle: {
     width: '100%',
-    paddingTop: '10px',
-    marginBottom: '24px',
-    borderColor: 'green',
-    '& input:valid + fieldset': {
-      color: 'red',
-      borderWidth: 2
-    },
-    '& input:invalid + fieldset': {
-      borderColor: 'red',
-      borderWidth: 2
-    },
-    '& input:valid:focus + fieldset': {
-      borderLeftWidth: 6,
-      borderColor: 'yellow',
-      padding: '10px !important'
-    },
-    '& input:valid:hover + fieldset': {
-      borderLeftWidth: 6,
-      borderColor: 'yellow',
-      padding: '10px !important'
-    }
+    marginBottom: 24
   },
   FormStyle: {
     backgroundColor: 'white',
@@ -46,12 +25,11 @@ const useStyles = makeStyles({
     overflowY: 'scroll',
     borderTop: '1px solid #fff3',
     borderBottom: '1px solid #fff3',
-    paddingRight: '5px',
     '&:focus': {
       outline: 'none'
     },
     '&::-webkit-scrollbar': {
-      width: '5px'
+      width: 5
     },
     '&::-webkit-scrollbar-track': {
       backgroundColor: 'rgba(0,0,0,0.1)'
@@ -67,15 +45,35 @@ const MyForm = ({ INITIAL_VALUES, SubmitAction }) => {
   const [, ShowAlert] = useAlert();
   const history = useHistory();
 
-  const handleSubmit = data => {
+  const handleSubmit = async (
+    values,
+    { resetForm, setErrors }
+  ) => {
     const date = new Date();
     const month = date.getMonth();
+    const day = date.getDate();
     // відформатована поточна дата
-    const actual_date = `${date.getFullYear()}-${
+    const actualDate = `${date.getFullYear()}-${
       month < 10 ? `0${month + 1}` : month + 1
-    }-${date.getDate()}`;
-    SubmitAction({ ...data, actual_date });
-    history.push('/');
+    }-${day < 10 ? `0${day + 1}` : day + 1}`;
+    try {
+      await SubmitAction({ ...values, actualDate });
+      resetForm();
+      ShowAlert({
+        open: true,
+        severity: 'success',
+        massage: 'Додавання пройшло успішно'
+      });
+      history.push('/');
+    } catch (error) {
+      const {errors} = error.response.data;
+      setErrors({ ...errors, floor: errors.storage_place });
+      ShowAlert({
+        open: true,
+        severity: 'error',
+        massage: 'Дані полів введені некоректно'
+      });
+    }
   };
 
   return (
@@ -83,11 +81,9 @@ const MyForm = ({ INITIAL_VALUES, SubmitAction }) => {
       <Formik
         initialValues={INITIAL_VALUES}
         validationSchema={FormValidation}
-        onSubmit={data => {
-          handleSubmit(data);
-        }}
+        onSubmit={handleSubmit}
       >
-        {({isValid }) => {
+        {({ isValid }) => {
           return (
             <Form>
               <AddAdressText
@@ -132,15 +128,9 @@ const MyForm = ({ INITIAL_VALUES, SubmitAction }) => {
                 color="primary"
                 size="large"
                 type="submit"
-                startIcon={<SaveIcon />}
+                endIcon={<SaveIcon />}
                 onClick={() => {
-                  if (isValid === true)
-                    ShowAlert({
-                      open: true,
-                      severity: 'success',
-                      massage: 'Додавання пройшло успішно'
-                    });
-                  else
+                  if (isValid === false)
                     ShowAlert({
                       open: true,
                       severity: 'error',

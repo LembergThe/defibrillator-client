@@ -1,9 +1,11 @@
-/* eslint-disable */
-const AddItRedux = (data,createDef)=> {
+﻿/* eslint-disable */
+const AddItRedux = (data,createDef,_id,owner)=> {
   
   const set_obj ={
     ...data,
-    id: `f${(~~(Math.random() * 1e8)).toString(16)}`,// generate id
+    actual_date:data.actualDate,
+    _id,
+    owner,
     location: { type: 'Point', coordinates:data.coordinates },
     language: 'Україномовний',
     phone: [data.phone],
