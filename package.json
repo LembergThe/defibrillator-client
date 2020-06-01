@@ -36,11 +36,6 @@
     "eject": "react-scripts eject",
     "lint": "eslint src/**/*.js"
   },
-  "husky": {
-    "hooks": {
-      "pre-commit": "lint-staged && yarn test && yarn test-server"
-    }
-  },
   "lint-staged": {
     "*.(js|jsx)": [
       "yarn lint --fix",
