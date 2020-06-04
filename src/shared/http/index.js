@@ -1,9 +1,11 @@
 import axios from 'axios';
 
+const BACKEND_URL = process.env.BACKEND_URL || 'http://localhost:8080';
+
 const instance = axios.create({
-  baseURL: 'https://deffsserver.herokuapp.com',
+  baseURL: BACKEND_URL,
   timeout: 1000,
-  headers: {'X-Custom-Header': 'foobar'}
+  headers: {}
 });
 
 const authorization = JSON.parse(localStorage.getItem('authorization'));
