@@ -4,11 +4,9 @@ FROM node:10-alpine as build-stage
 WORKDIR /usr/src/app
 
 # Install app dependencies
-# A wildcard is used to ensure both package.json AND package-lock.json are copied
-# where available (npm@5+)
 COPY package.json ./
 
-RUN yarn install --network-timeout 1000000
+RUN yarn install
 
 # Bundle app source
 COPY . .
