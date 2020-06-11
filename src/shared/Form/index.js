@@ -1,4 +1,3 @@
-/* eslint-disable camelcase */
 import React from 'react';
 import Button from '@material-ui/core/Button';
 import SaveIcon from '@material-ui/icons/Save';
@@ -6,52 +5,38 @@ import { useHistory } from 'react-router-dom';
 import { makeStyles } from '@material-ui/core/styles';
 import { Formik, Form } from 'formik';
 import PropTypes from 'prop-types';
+import { connect } from 'react-redux';
 import AddAdressText from './AddAdressText';
 import PlatesSelect from './PlatesSelect';
 import AddTelephone from './AddTelephone';
 import AddMoreInfo from './AddMoreInfo';
 import FormValidation from './validator';
 import useAlert from '../Alert/useAlert';
-import { MyTextField } from '../Fields';
+import { MyTextField, MyImageField } from '../Fields';
+import {
+  setPage,
+  setData
+} from '../../modules/Sidebar/components/ItemList/actions/list';
+import ButtonBack from '../ButtonBack';
 
 const useStyles = makeStyles({
-  DefaultStyle: {
+  input: {
     width: '100%',
-    paddingTop: '10px',
-    marginBottom: '24px',
-    borderColor: 'green',
-    '& input:valid + fieldset': {
-      color: 'red',
-      borderWidth: 2
-    },
-    '& input:invalid + fieldset': {
-      borderColor: 'red',
-      borderWidth: 2
-    },
-    '& input:valid:focus + fieldset': {
-      borderLeftWidth: 6,
-      borderColor: 'yellow',
-      padding: '10px !important'
-    },
-    '& input:valid:hover + fieldset': {
-      borderLeftWidth: 6,
-      borderColor: 'yellow',
-      padding: '10px !important'
-    }
+    marginBottom: 24
   },
-  FormStyle: {
+  form: {
     backgroundColor: 'white',
     padding: '5%',
     overflowX: 'hidden',
     overflowY: 'scroll',
     borderTop: '1px solid #fff3',
     borderBottom: '1px solid #fff3',
-    paddingRight: '5px',
+    borderRadius: 5,
     '&:focus': {
       outline: 'none'
     },
     '&::-webkit-scrollbar': {
-      width: '5px'
+      width: 5
     },
     '&::-webkit-scrollbar-track': {
       backgroundColor: 'rgba(0,0,0,0.1)'
@@ -62,54 +47,77 @@ const useStyles = makeStyles({
   }
 });
 
-const MyForm = ({ INITIAL_VALUES, SubmitAction }) => {
+const MyForm = ({
+  INITIAL_VALUES,
+  submitAction,
+  resetPage,
+  resetData
+}) => {
   const classes = useStyles();
   const [, ShowAlert] = useAlert();
   const history = useHistory();
 
-  const handleSubmit = data => {
-    const date = new Date();
-    const month = date.getMonth();
-    // відформатована поточна дата
-    const actual_date = `${date.getFullYear()}-${
-      month < 10 ? `0${month + 1}` : month + 1
-    }-${date.getDate()}`;
-    SubmitAction({ ...data, actual_date });
-    history.push('/');
+  const resetPagination = (page, data) => {
+    resetPage(page);
+    resetData(data);
+  };
+
+  const handleSubmit = async (
+    values,
+    { resetForm, setErrors }
+  ) => {
+    const actualDate = new Date()
+      .toISOString()
+      .split('T')[0];
+    try {
+      await submitAction({ ...values, actualDate });
+      ShowAlert({
+        open: true,
+        severity: 'success',
+        message: 'Додавання пройшло успішно'
+      });
+      resetForm();
+      resetPagination(1, []);
+      history.push('/');
+    } catch (error) {
+      const { errors } = error.response.data;
+      setErrors({ ...errors, floor: errors.storage_place });
+      ShowAlert({
+        open: true,
+        severity: 'error',
+        message: 'Серверна помилка'
+      });
+    }
   };
 
   return (
-    <div className={classes.FormStyle}>
+    <div className={classes.form}>
       <Formik
         initialValues={INITIAL_VALUES}
         validationSchema={FormValidation}
-        onSubmit={data => {
-          handleSubmit(data);
-        }}
+        onSubmit={handleSubmit}
       >
-        {({isValid }) => {
+        {({ isValid, setFieldValue }) => {
           return (
             <Form>
-              <AddAdressText
-                className={classes.DefaultStyle}
-              />
+              <AddAdressText className={classes.input} />
               <MyTextField
                 name="title"
                 label="Введіть назву"
-                className={classes.DefaultStyle}
+                className={classes.input}
               />
               <MyTextField
                 name="accessibility"
                 label="Коли доступний пристрій?"
-                className={classes.DefaultStyle}
+                className={classes.input}
               />
               <MyTextField
                 name="storage_place"
                 label="Де розташований в будівлі?"
-                className={classes.DefaultStyle}
+                className={classes.input}
               />
               <MyTextField
-                className={classes.DefaultStyle}
+                className={classes.input}
                 name="floor"
                 label="На якому поверсі знаходиться?"
                 type="number"
@@ -119,38 +127,42 @@ const MyForm = ({ INITIAL_VALUES, SubmitAction }) => {
               />
               <PlatesSelect name="informational_plates" />
               <AddTelephone
-                className={classes.DefaultStyle}
+                className={classes.input}
                 name="phone"
               />
+              <MyImageField
+                variant="contained" 
+                color="primary"
+                className={classes.input}
+                id="images"
+                label="Завантажити зображення"
+                name="images"
+                setFieldValue={setFieldValue}
+              />
               <AddMoreInfo
-                className={classes.DefaultStyle}
+                className={classes.input}
                 name="additional_information"
               />
               <Button
-                className={classes.DefaultStyle}
+                className={classes.input}
                 variant="contained"
                 color="primary"
                 size="large"
                 type="submit"
-                startIcon={<SaveIcon />}
+                endIcon={<SaveIcon />}
                 onClick={() => {
-                  if (isValid === true)
-                    ShowAlert({
-                      open: true,
-                      severity: 'success',
-                      massage: 'Додавання пройшло успішно'
-                    });
-                  else
+                  if (isValid === false)
                     ShowAlert({
                       open: true,
                       severity: 'error',
-                      massage:
+                      message:
                         'Дані полів введені некоректно'
                     });
                 }}
               >
                 Зберегти
               </Button>
+              <ButtonBack />
             </Form>
           );
         }}
@@ -165,13 +177,18 @@ MyForm.propTypes = {
     address: PropTypes.string.isRequired,
     floor: PropTypes.string.isRequired,
     informational_plates: PropTypes.string.isRequired,
-    phone: PropTypes.string.isRequired,
+    phone: PropTypes.array.isRequired,
     additional_information: PropTypes.string.isRequired,
     storage_place: PropTypes.string.isRequired,
     accessibility: PropTypes.string.isRequired,
     coordinates: PropTypes.array.isRequired
   }).isRequired,
-  SubmitAction: PropTypes.func.isRequired
+  submitAction: PropTypes.func.isRequired,
+  resetPage: PropTypes.func.isRequired,
+  resetData: PropTypes.func.isRequired
 };
 
-export default MyForm;
+export default connect(null, {
+  resetPage: page => setPage(page),
+  resetData: data => setData(data)
+})(MyForm);

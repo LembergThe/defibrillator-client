@@ -1,29 +1,38 @@
 /* eslint-disable camelcase */
 import React from 'react';
-import { connect } from 'react-redux';
-import PropTypes from 'prop-types';
 import MyForm from '../../../../shared/Form';
-import AddItRedux from './AddItRedux';
-import AddInDB from './AddInDB';
-import { createDefPoint } from '../ItemList/actions/list';
 import INITIAL_VALUES from './const';
+import { createItem, createImage } from '../../api';
 
-const AddForm = ({ createDef }) => {
+const AddForm = () => {
+  const hadleSubmit = async ({ images, ...data }) => {
+    const body = {
+      ...data,
+      actual_date: data.actualDate,
+      location: {
+        type: 'Point',
+        coordinates: data.coordinates
+      },
+      storage_place: `Поверх ${data.floor}, ${data.storage_place}`,
+    };
 
+    const bodyFormData = new FormData();
+    Object.values(images).forEach(image =>
+      bodyFormData.append('images', image)
+    );
+
+    const respond = await createItem(body);
+    await createImage(
+      bodyFormData,
+      respond.data.defibrillator._id
+    );
+  };
   return (
     <MyForm
       INITIAL_VALUES={INITIAL_VALUES}
-      SubmitAction={data => {      
-        AddInDB(data);
-        AddItRedux(data, createDef);     
-      }}
+      submitAction={hadleSubmit}
     />
   );
 };
-AddForm.propTypes = {
-  createDef: PropTypes.func.isRequired
-};
 
-export default connect(null, { createDef: createDefPoint })(
-  AddForm
-);
+export default AddForm;

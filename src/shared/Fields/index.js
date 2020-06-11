@@ -4,17 +4,29 @@ import { useField } from 'formik';
 import { makeStyles } from '@material-ui/core/styles';
 import {
   TextField,
-  Checkbox,
-  FormControlLabel,
   InputLabel,
   MenuItem,
   FormControl,
-  Select
+  Select,
+  InputBase,
+  Button,
+  Input
 } from '@material-ui/core';
 
 const useStyles = makeStyles({
   textField: {
     whiteSpace: 'pre-line'
+  },
+  uploadInput: {
+    display: 'none'
+  },
+  uploadLabel: {
+    display: 'inline-block',
+    marginTop: 10,
+    marginBottom: 10
+  },
+  imageField: {
+    display: 'none'
   }
 });
 
@@ -33,25 +45,16 @@ const MyTextField = props => {
   );
 };
 
-const MyCheckbox = ({ label, ...props }) => {
-  const [field] = useField({ ...props, type: 'checkbox' });
+const MyInputBase = props => {
+  const [field] = useField(props);
 
   return (
-    <FormControlLabel
-      control={(
-        <Checkbox
-          className="checkbox"
-          {...field}
-          {...props}
-        />
-      )}
-      label={label}
+    <InputBase
+      className="text-input"
+      {...field}
+      {...props}
     />
   );
-};
-
-MyCheckbox.propTypes = {
-  label: PropTypes.string.isRequired
 };
 
 const MySelect = ({
@@ -91,6 +94,49 @@ const MySelect = ({
   );
 };
 
+const UploadButton = ({
+  children,
+  handleUpload,
+  htmlFor,
+  ...props
+}) => {
+  const classes = useStyles();
+  return (
+    <>
+      <input
+        accept=".jpg, .jpeg, .png, .svg, .webp"
+        type="file"
+        multiple
+        onChange={handleUpload}
+        id={htmlFor}
+        className={classes.uploadInput}
+      />
+      <label
+        htmlFor={htmlFor}
+        className={classes.uploadLabel}
+      >
+        <Button
+          component="span"
+          variant="contained"
+          color="primary"
+          {...props}
+        >
+          {children}
+        </Button>
+      </label>
+    </>
+  );
+};
+
+UploadButton.propTypes = {
+  children: PropTypes.oneOfType([
+    PropTypes.string,
+    PropTypes.element
+  ]).isRequired,
+  handleUpload: PropTypes.func.isRequired,
+  htmlFor: PropTypes.string.isRequired
+};
+
 MySelect.defaultProps = {
   variant: null,
   classes: null
@@ -104,4 +150,39 @@ MySelect.propTypes = {
   classes: PropTypes.string
 };
 
-export { MyTextField, MyCheckbox, MySelect };
+const MyImageField = ({ label, id, name, setFieldValue, ...props }) => {
+  const classes = useStyles();
+
+  return (
+    <div className={classes.root}>
+      <Input
+        type="file"
+        inputProps={{
+          accept: 'image/*',
+          multiple: true
+        }}
+        name={name}
+        id={id}
+        className={classes.imageField}
+        onChange={e => {
+          setFieldValue('images', e.currentTarget.files);
+        }}
+      />
+      
+      <InputLabel htmlFor={id}>
+        <Button {...props} component='span'>
+          { label }
+        </Button>
+      </InputLabel>
+    </div>
+  );
+};
+
+MyImageField.propTypes = {
+  label: PropTypes.string.isRequired,
+  id: PropTypes.string.isRequired,
+  name: PropTypes.string.isRequired,
+  setFieldValue: PropTypes.func.isRequired
+};
+
+export { MyTextField, MySelect, MyInputBase, MyImageField, UploadButton };

@@ -1,11 +1,22 @@
 import React, { useEffect, useState } from 'react';
 import Autocomplete from '@material-ui/lab/Autocomplete';
 import TextField from '@material-ui/core/TextField';
-import { connect } from 'formik';
+import { connect as connectFormik } from 'formik';
+import { connect } from 'react-redux';
 import PropTypes from 'prop-types';
-import getGeocodingOptions from '../api';
+import { addNewPoint } from '../../modules/MapHolder/actions/mapState';
+import {
+  getGeocodingOptions,
+  getGeocodingDetails,
+  getReverseGeocoding
+} from '../api';
 
-const AddAdressText = ({ formik, className }) => {
+const AddAdressText = ({
+  formik,
+  className,
+  newPoint,
+  addNewPoint
+}) => {
   const [open, setOpen] = useState(false);
   const [options, setOptions] = useState([]);
   const [value, setValue] = useState(formik.values.address);
@@ -13,25 +24,42 @@ const AddAdressText = ({ formik, className }) => {
     setValue(formik.values.address);
   }, [formik.values.address]);
 
+  const reverseRequest = async () => {
+    const result = await getReverseGeocoding(newPoint);
+    const {
+      lng,
+      lat
+    } = result.data.results[0].geometry.location;
+    formik.setFieldValue(
+      'address',
+      result.data.results[0].formatted_address
+    );
+    formik.setFieldValue('coordinates', [lng, lat]);
+  };
+
   useEffect(() => {
-    let active = true;
+    if (Object.keys(newPoint).length !== 0) {
+      reverseRequest();
+    }
+    // eslint-disable-next-line
+  }, [newPoint]);
+
+  useEffect(() => {
+    return () => {
+      addNewPoint({});
+    };
+    // eslint-disable-next-line
+  }, []);
+
+  useEffect(() => {
     if (value.length > 2) {
       (async () => {
         const countries = await getGeocodingOptions(value);
-        if (active) {
-          setOptions(
-            countries.data.features.map(elem => {
-              return elem;
-            })
-          );
-        }
+        setOptions(countries.data.predictions);
       })();
     } else {
       setOpen(false);
     }
-    return () => {
-      active = false;
-    };
   }, [value]);
 
   useEffect(() => {
@@ -39,6 +67,33 @@ const AddAdressText = ({ formik, className }) => {
       setOptions([]);
     }
   }, [open]);
+
+  const SelectOption = (_, selectedOption) => {
+    if (selectedOption != null) {
+      formik.setFieldValue(
+        'address',
+        selectedOption.description
+      );
+      (async () => {
+        const detailsAboutSelectedLocation = await getGeocodingDetails(
+          selectedOption.place_id
+        );
+        const coordinates =
+          detailsAboutSelectedLocation.data.result.geometry
+            .location;
+        formik.setFieldValue('coordinates', [
+          coordinates.lng,
+          coordinates.lat
+        ]);
+        addNewPoint({
+          lng: coordinates.lng,
+          lat: coordinates.lat
+        });
+      })();
+      setValue(selectedOption.description);
+      formik.setFieldTouched('address', false);
+    }
+  };
 
   return (
     <Autocomplete
@@ -54,25 +109,11 @@ const AddAdressText = ({ formik, className }) => {
       }}
       inputValue={value}
       onBlur={() => setValue(formik.values.address)}
-      onChange={(e, selectedOption) => {
-        if (selectedOption != null) {
-          formik.setFieldValue(
-            'address',
-            selectedOption.place_name
-          );
-          formik.setFieldValue(
-            'coordinates',
-            selectedOption.center
-          );
-          setValue(selectedOption.place_name);
-          formik.setFieldTouched('address', false);
-        }
-      }}
-      getOptionLabel={option => option.place_name}
+      onChange={SelectOption}
+      getOptionLabel={option => option.description}
       options={options}
       renderInput={params => (
         <TextField
-          // eslint-disable-next-line react/jsx-props-no-spreading
           {...params}
           name="address"
           onChange={e => {
@@ -84,7 +125,6 @@ const AddAdressText = ({ formik, className }) => {
           }}
           label="Пошук Адреси"
           fullWidth
-          variant="outlined"
           helperText={
             formik.errors.address && formik.touched.address
               ? formik.errors.address
@@ -101,6 +141,11 @@ const AddAdressText = ({ formik, className }) => {
 
 AddAdressText.propTypes = {
   className: PropTypes.string.isRequired,
+  newPoint: PropTypes.shape({
+    lng: PropTypes.number,
+    lat: PropTypes.number
+  }).isRequired,
+  addNewPoint: PropTypes.func.isRequired,
   formik: PropTypes.shape({
     values: PropTypes.shape({
       address: PropTypes.string
@@ -116,4 +161,11 @@ AddAdressText.propTypes = {
   }).isRequired
 };
 
-export default connect(AddAdressText);
+export default connect(
+  state => ({
+    newPoint: state.newPoint
+  }),
+  dispatch => ({
+    addNewPoint: newPoint => dispatch(addNewPoint(newPoint))
+  })
+)(connectFormik(AddAdressText));

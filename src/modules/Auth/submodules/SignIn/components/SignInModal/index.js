@@ -7,7 +7,12 @@ import { Formik } from 'formik';
 import { socketAuthOpen } from '../../../../../../shared/websocket';
 import cancelToken from '../../../../../../shared/cancel-token';
 import { signInUser } from '../../../../api';
-import { startSignIn, successSignIn, failSignIn } from '../../../../actions/user';
+import {
+  startSignIn,
+  successSignIn,
+  failSignIn
+} from '../../../../actions/user';
+import { fetchDefs, clearData } from '../../../../../Sidebar/components/ItemList/actions/list';
 import { INITIAL_VALUES } from './const';
 import AuthSchema from './validator';
 import Header from './components/Header';
@@ -21,14 +26,24 @@ const useStyles = makeStyles(() => ({
     display: 'flex',
     flexDirection: 'column',
     alignItems: 'center'
-  },
+  }
 }));
 
-const SignInModal = ({ handleClose, start, success, fail }) => {
+const SignInModal = ({
+  handleClose,
+  start,
+  success,
+  fail,
+  fetchDefItems,
+  clearDefItems
+}) => {
   const classes = useStyles();
   const [error, setError] = useState('');
 
-  const handleSubmit = async (values, { setSubmitting }) => {
+  const handleSubmit = async (
+    values,
+    { setSubmitting }
+  ) => {
     start();
 
     try {
@@ -36,6 +51,8 @@ const SignInModal = ({ handleClose, start, success, fail }) => {
       const { authorization } = headers;
       success(data, authorization);
       socketAuthOpen();
+      clearDefItems();
+      fetchDefItems();
       handleClose();
     } catch (e) {
       const { message } = e.response.data;
@@ -62,7 +79,9 @@ const SignInModal = ({ handleClose, start, success, fail }) => {
           validationSchema={AuthSchema}
           onSubmit={handleSubmit}
         >
-          {({ isSubmitting }) => <Form isSubmitting={isSubmitting} />}
+          {({ isSubmitting }) => (
+            <Form isSubmitting={isSubmitting} />
+          )}
         </Formik>
 
         <Footer error={error} />
@@ -75,14 +94,16 @@ SignInModal.propTypes = {
   handleClose: PropTypes.func.isRequired,
   start: PropTypes.func.isRequired,
   success: PropTypes.func.isRequired,
-  fail: PropTypes.func.isRequired
+  fail: PropTypes.func.isRequired,
+  fetchDefItems: PropTypes.func.isRequired,
+  clearDefItems: PropTypes.func.isRequired
 };
 
-export default connect(
-  null,
-  dispatch => ({
-    start: () => dispatch(startSignIn()),
-    success: (user, authorization) => dispatch(successSignIn(user, authorization)),
-    fail: () => dispatch(failSignIn())
-  })
-)(SignInModal);
+export default connect(null, dispatch => ({
+  start: () => dispatch(startSignIn()),
+  success: (user, authorization) =>
+    dispatch(successSignIn(user, authorization)),
+  fail: () => dispatch(failSignIn()),
+  fetchDefItems: () => dispatch(fetchDefs()),
+  clearDefItems: () => dispatch(clearData()),
+}))(SignInModal);
