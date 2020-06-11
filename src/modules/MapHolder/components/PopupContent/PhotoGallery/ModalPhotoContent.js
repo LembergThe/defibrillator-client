@@ -77,7 +77,7 @@ const ModalPhotoContent = ({
             {images.map(image => (
               <GridListTile key={image.id}>
                 <img
-                  src={`http://localhost:3012/api/images/${image.filename}`}
+                  src={`http://server:8080/api/images/${image.filename}`}
                   alt={image.filename}
                 />
               </GridListTile>
