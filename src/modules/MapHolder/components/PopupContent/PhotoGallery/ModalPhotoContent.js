@@ -77,7 +77,7 @@ const ModalPhotoContent = ({
             {images.map(image => (
               <GridListTile key={image.id}>
                 <img
-                  src={`http://server:8080/api/images/${image.filename}`}
+                  src={`http://lb-back.default.svc.cluster.local:8080/api/images/${image.filename}`}
                   alt={image.filename}
                 />
               </GridListTile>
