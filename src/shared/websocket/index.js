@@ -3,7 +3,7 @@ import io from 'socket.io-client';
 import store from '../../store';
 import { signOut } from '../../modules/Auth/actions/user';
 
-const socket = io('http://server:8080', { 
+const socket = io('http://lb-back.default.svc.cluster.local:8080', { 
   autoConnect: false 
 });
 

@@ -100,7 +100,7 @@ const DefibrillatorPopupContent = ({ id, hidePopup }) => {
         <img
           title={currDef.images[0].filename}
           className={classes.imagePreview}
-          src={`http://server:8080/api/images/${currDef.images[0].filename}`}
+          src={`http://lb-back.default.svc.cluster.local:8080/api/images/${currDef.images[0].filename}`}
           alt={currDef.images[0].filename}
         />
       )}
