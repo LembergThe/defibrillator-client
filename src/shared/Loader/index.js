@@ -7,13 +7,14 @@ const useStyles = makeStyles(() => ({
   },
 
   loadCircle: {
-    width: '40px',
-    height: '40px',
+    width: 40,
+    height: 40,
     borderRadius: '50%',
     background: 'rgba(0, 0, 0, 0)',
     border: '3px solid rgba(0, 0, 0, 0.1)',
     borderTopColor: '#000',
     borderBottomColor: '#000',
+    filter: 'invert(1)',
     animation: '$rotating 0.7s ease infinite'
   }
 }));

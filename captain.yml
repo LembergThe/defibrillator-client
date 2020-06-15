@@ -1,0 +1,3 @@
+defibrillator-client:
+  build: Dockerfile
+  image: rborovets/defibrillator-client

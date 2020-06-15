@@ -1,0 +1,38 @@
+version: 0.2
+
+env:
+  secrets-manager:
+    DOKCERHUB_USERNAME: dockerhub:username
+    DOKCERHUB_PASSWORD: dockerhub:password
+  variables:
+    IMAGE: rborovets/defibrillator-client
+            
+phases:
+  install:
+    commands:
+      - curl -s https://packages.cloud.google.com/apt/doc/apt-key.gpg | apt-key add -
+      - echo "deb https://apt.kubernetes.io/ kubernetes-xenial main" | tee -a /etc/apt/sources.list.d/kubernetes.list
+      - apt-get update && apt-get install -y apt-transport-https
+      - apt-get install -y kubectl
+      - curl -sSL https://raw.githubusercontent.com/harbur/captain/v1.1.3/install.sh | bash
+      - export PATH=$HOME/.captain/bin:$PATH
+
+  pre_build:
+    commands:
+      - echo Logging in to Dockerhub...
+      - docker login -u $DOKCERHUB_USERNAME -p $DOKCERHUB_PASSWORD
+
+  build:
+    commands:
+      - echo Build started on `date` && echo Building the Docker image...
+      - docker build . -t $IMAGE
+      - docker run $IMAGE echo 'Running tests'
+      - docker run $IMAGE echo 'Running linters'
+
+  post_build:
+    commands:
+      - echo Build completed on `date`
+      - echo Pushing the Docker image...
+      - captain push -c
+      # - aws eks --region us-east-1 update-kubeconfig --name $CLUSTER_NAME
+      # - kubectl apply -f kube-defibrillator-client.yml

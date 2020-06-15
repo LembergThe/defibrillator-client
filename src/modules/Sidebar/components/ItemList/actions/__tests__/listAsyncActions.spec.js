@@ -1,7 +1,6 @@
 import configureMockStore from 'redux-mock-store';
 import thunk from 'redux-thunk';
 import moxios from 'moxios';
-// import http from '../../../../../../shared/http';
 
 import * as types from '../../consts';
 import * as actions from '../list';
@@ -38,7 +37,8 @@ describe('fetchDefs action', () => {
     const expectedActions = [
       { type: types.START_LOAD_DATA },
       {
-        type: types.SET_PAGE
+        type: types.SET_PAGE,
+        payload: undefined
       },
       {
         type: types.SUCCESS_LOAD_DATA,
@@ -51,6 +51,23 @@ describe('fetchDefs action', () => {
     });
   });
 
+  it('should have payload data when fetching defs has been done', () => {
+    moxios.wait(() => {
+      const request = moxios.requests.mostRecent();
+      request.respondWith(mockSuccessResponse(mockData));
+    });
+    const store = mockStore({ data: [] });
+
+    return store.dispatch(actions.fetchDefs()).then(() => {
+      expect(
+        store.getActions()[2].payload.listDefs.length
+      ).toEqual(3);
+      expect(
+        store.getActions()[2].payload.mapDefs.length
+      ).toEqual(1);
+    });
+  });
+
   it(`creates ${types.FAIL_LOAD_DATA} when fetching defs failed`, () => {
     moxios.wait(() => {
       const request = moxios.requests.mostRecent();
@@ -59,6 +76,7 @@ describe('fetchDefs action', () => {
     const store = mockStore({ error: null });
     const expectedActions = [
       { type: types.START_LOAD_DATA },
+      { type: types.SET_PAGE, payload: undefined },
       {
         type: types.FAIL_LOAD_DATA,
         payload: mockError
@@ -66,6 +84,17 @@ describe('fetchDefs action', () => {
     ];
     return store.dispatch(actions.fetchDefs()).then(() => {
       expect(store.getActions()).toEqual(expectedActions);
+    });
+  });
+
+  it('should have error payload when fetching defs failed', () => {
+    moxios.wait(() => {
+      const request = moxios.requests.mostRecent();
+      request.respondWith(mockErrorResponse(mockError));
+    });
+    const store = mockStore({ error: null });
+    return store.dispatch(actions.fetchDefs()).then(() => {
+      expect(store.getActions()[2].payload).toBeTruthy();
     });
   });
 });

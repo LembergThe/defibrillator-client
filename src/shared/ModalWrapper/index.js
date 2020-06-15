@@ -12,7 +12,7 @@ const useStyles = makeStyles(theme => ({
   paper: {
     backgroundColor: theme.palette.background.paper,
     boxShadow: theme.shadows[5],
-    padding: theme.spacing(8, 1.5),
+    padding: theme.spacing(4, 1.5),
     '&:focus': {
       outline: 0
     }
@@ -23,7 +23,8 @@ const ModalWrapper = ({ ButtonOpen, ModalContent }) => {
   const classes = useStyles();
   const [open, setOpen] = useState(false);
 
-  const handleOpen = () => {
+  const handleOpen = event => {
+    event.preventDefault();
     setOpen(true);
   };
 

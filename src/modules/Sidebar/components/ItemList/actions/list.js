@@ -1,19 +1,23 @@
 import {
   START_LOAD_DATA,
   SET_DATA,
+  CLEAR_DATA,
   SUCCESS_LOAD_DATA,
   FAIL_LOAD_DATA,
   CREATE_DEF_POINT,
   DELETE_DEF_POINT,
   EDIT_DEF_POINT,
+  BLOCK_DEF_POINT,
+  SET_ACTIVE,
   SET_PAGE,
   SET_PER_PAGE
 } from '../consts';
 import {
-  fetchDefItems,
+  getDefItems,
   createItem,
   deleteItem,
-  editItem
+  editItem,
+  blockItem
 } from '../../../api';
 import cancelToken from '../../../../../shared/cancel-token';
 
@@ -38,6 +42,19 @@ export const setData = data => {
   };
 };
 
+export const clearData = () => {
+  return {
+    type: CLEAR_DATA
+  };
+};
+
+export const setActive = id => {
+  return {
+    type: SET_ACTIVE,
+    payload: id
+  };
+};
+
 export const setPage = page => {
   return {
     type: SET_PAGE,
@@ -52,15 +69,35 @@ export const failLoadDef = error => {
   };
 };
 
+const getCurrentPosition = (options = {}) => {
+  return new Promise((resolve, reject) => {
+    navigator.geolocation.getCurrentPosition(
+      resolve,
+      reject,
+      options
+    );
+  });
+};
+
 export const fetchDefs = params => {
   return async dispatch => {
     dispatch(startLoadDef());
+    dispatch(setPage());
+
     try {
-      const { data } = await fetchDefItems(
-        params,
+      let userCoordinates;
+      try {
+        const { coords } = await getCurrentPosition();
+        const { latitude, longitude } = coords;
+        userCoordinates = { latitude, longitude };
+      } catch (e) {
+        userCoordinates = null;
+      }
+
+      const { data } = await getDefItems(
+        { ...params, ...userCoordinates },
         defsCancelToken.instance
       );
-      dispatch(setPage());
       dispatch(successLoadDef(data));
     } catch (e) {
       dispatch(failLoadDef(e));
@@ -81,6 +118,7 @@ export const deleteDefPoint = id => {
     payload: id
   };
 };
+
 export const editDefPoint = (id, newDefInfo) => {
   return {
     type: EDIT_DEF_POINT,
@@ -91,9 +129,18 @@ export const editDefPoint = (id, newDefInfo) => {
   };
 };
 
+export const blockDefPoint = (id, blocked) => {
+  return {
+    type: BLOCK_DEF_POINT,
+    payload: {
+      id,
+      blocked
+    }
+  };
+};
+
 export const createDefItem = newItem => {
   return async dispatch => {
-    dispatch(startLoadDef());
     try {
       const { data } = await createItem(newItem);
       dispatch(createDefPoint(data.defibrillator));
@@ -105,10 +152,11 @@ export const createDefItem = newItem => {
 
 export const deleteDefItem = id => {
   return async dispatch => {
-    dispatch(startLoadDef());
     try {
       const { data } = await deleteItem(id);
       dispatch(deleteDefPoint(data.defibrillator._id));
+      dispatch(clearData());
+      dispatch(fetchDefs());
     } catch (e) {
       dispatch(failLoadDef(e));
     }
@@ -117,12 +165,28 @@ export const deleteDefItem = id => {
 
 export const editDefItem = (id, newDefInfo) => {
   return async dispatch => {
-    dispatch(startLoadDef());
     try {
       const { data } = await editItem(id, newDefInfo);
       const { defibrillator } = data;
       dispatch(
         editDefPoint(defibrillator._id, defibrillator)
+      );
+    } catch (e) {
+      dispatch(failLoadDef(e));
+    }
+  };
+};
+
+export const blockDefItem = (id, blocked) => {
+  return async dispatch => {
+    try {
+      const { data } = await blockItem(id, { blocked });
+      const { defibrillator } = data;
+      dispatch(
+        blockDefPoint(
+          defibrillator._id,
+          defibrillator.blocked
+        )
       );
     } catch (e) {
       dispatch(failLoadDef(e));

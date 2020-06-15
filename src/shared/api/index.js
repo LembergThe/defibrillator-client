@@ -1,8 +1,24 @@
 import http from '../http';
 
+const host = window.location.origin;
+const URL = `${host}/api/gmap`;
+
 const getGeocodingOptions = value => {
+  return http.get(`${URL}/options/${value}`);
+};
+
+const getGeocodingDetails = id => {
+  return http.get(`${URL}/details/${id}`);
+};
+
+const getReverseGeocoding = lngLat => {
   return http.get(
-    `https://api.mapbox.com/geocoding/v5/mapbox.places/${value}.json?access_token=pk.eyJ1Ijoib3Nrb3ZiYXNpdWsiLCJhIjoiY2s1NWVwcnhhMDhrazNmcGNvZjJ1MnA4OSJ9.56GsGp2cl6zpYh-Ns8ThxA`
+    `${URL}/reversegeocode/${lngLat.lng}/${lngLat.lat}`
   );
 };
-export default getGeocodingOptions;
+
+export {
+  getGeocodingOptions,
+  getGeocodingDetails,
+  getReverseGeocoding
+};

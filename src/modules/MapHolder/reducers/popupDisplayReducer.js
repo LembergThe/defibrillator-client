@@ -8,15 +8,11 @@ export default (
 ) => {
   switch (type) {
     case SHOW_POPUP: {
-      if (state && state.id === payload.id) {
-        return state;
-      }
       return {
         ...state,
         ...payload
       };
     }
-
     case HIDE_POPUP: {
       return null;
     }
