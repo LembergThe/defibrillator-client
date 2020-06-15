@@ -26,7 +26,7 @@ phases:
   build:
     commands:
       - echo Build started on `date` && echo Building the Docker image...
-     
+      # - docker build . -t $IMAGE
       - docker run $IMAGE echo 'Running tests'
       - docker run $IMAGE echo 'Running linters'
 
@@ -34,6 +34,6 @@ phases:
     commands:
       - echo Build completed on `date`
       - echo Pushing the Docker image...
-      
-      - aws eks --region us-east-1 update-kubeconfig --name $CLUSTER_NAME
-      - kubectl apply -f kube-defibrillator-client.yml
+      # - captain push -c
+      - aws eks --region us-east-1 update-kubeconfig --name $CLUSTER_NAME && kubectl apply -f kube-defibrillator-client.yml
+      - 
