@@ -10,7 +10,7 @@ env:
 phases:
   install:
     commands:
-      - apt-get update && apt-get -y install jq python3-pip python3-dev && pip3 install --upgrade awscli
+      - aws --version
       - sudo apt-get update && sudo apt-get install -y apt-transport-https
       - curl -s https://packages.cloud.google.com/apt/doc/apt-key.gpg | sudo apt-key add -
       - echo "deb https://apt.kubernetes.io/ kubernetes-xenial main" | sudo tee -a /etc/apt/sources.list.d/kubernetes.list
